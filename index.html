@@ -80,6 +80,10 @@ const CFG={
 const FREE=375000;
 const SLABS=[[300000,.10],[400000,.15],[500000,.20],[2000000,.25],[Infinity,.30]];
 const MIN_TAX={"ঢাকা/চট্টগ্রাম সিটি":5000,"অন্যান্য সিটি কর্পোরেশন":4000,"সিটির বাইরে":3000};
+/* PDF তালিকা: ফাইল pdf ফোল্ডারে রেখে এখানে এক লাইন করে যোগ করুন: ["শিরোনাম","ক্যাটাগরি","pdf/ফাইল-নাম.pdf"], */
+const LIB=[
+// ["আয়কর রিটার্ন গাইড ২০২৫","গাইড","pdf/return-guide-2025.pdf"],
+];
 /* ===== কনটেন্ট ===== */
 const PROBLEMS=[
 ["রিটার্ন জমার পর ভুল ধরা পড়েছে","জমা দেওয়া রিটার্নে ভুল পেলে প্রথমে কাগজপত্র মিলিয়ে ভুলটি চিহ্নিত করুন। সংশোধিত রিটার্ন দেওয়ার সুযোগ ও সময়সীমা আইনের শর্ত অনুযায়ী যাচাই করতে হয়। দেরি না করে পরামর্শ নিন।"],
@@ -112,6 +116,7 @@ home:["হোম",()=>`
 <a class="tile" href="#problems"><h3>করদাতার সমস্যা</h3>নোটিশ, ভুল রিটার্ন, ক্রেডিট নিয়ে সমাধান</a>
 <a class="tile" href="#guides"><h3>ট্যাক্স গাইড</h3>ধাপে ধাপে সহজ নির্দেশনা</a>
 <a class="tile" href="#tools"><h3>ক্যালকুলেটর ও টুল</h3>আনুমানিক কর, নথির তালিকা, সময়সীমা</a>
+<a class="tile" href="#library"><h3>লাইব্রেরি</h3>বই, আইন ও গাইডের PDF</a>
 <a class="tile" href="#cases"><h3>মামলার রায় <span class="soon">শীঘ্রই</span></h3>গুরুত্বপূর্ণ আয়কর রায়ের সহজ ব্যাখ্যা</a>
 <a class="tile" href="#updates"><h3>আপডেট</h3>নতুন আইন ও NBR-এর নির্দেশ</a>
 </div>
@@ -130,6 +135,7 @@ tools:["টুলস",()=>`<h1>ক্যালকুলেটর ও টুল</
 <p><button onclick="calc()">হিসাব করুন</button></p><div id="out" aria-live="polite"></div></div>
 <div class="box"><h2 style="margin-top:0">রিটার্নের নথির তালিকা</h2>${DOCS.map((d,i)=>`<label style="display:flex;gap:8px;align-items:center;margin:4px 0"><input style="width:auto" type="checkbox" onchange="chk()"> ${d}</label>`).join("")}<p id="ck" class="mute"></p></div>
 <div class="box"><h2 style="margin-top:0">গুরুত্বপূর্ণ সময়সীমা</h2><p>ব্যক্তি করদাতার রিটার্ন জমার সাধারণ শেষ সময় <b>৩০ নভেম্বর</b>। NBR সময় বাড়ালে বা বদলালে আপডেট পাতা দেখুন।</p><p id="days" class="res"></p></div>`],
+library:["লাইব্রেরি",()=>`<h1>লাইব্রেরি</h1><p class="mute">বই, আইন ও গাইডের PDF। নামে ট্যাপ করে পড়ুন বা ডাউনলোড করুন।</p><input id="lq" placeholder="PDF খুঁজুন" oninput="lib()" aria-label="PDF খুঁজুন"><div id="ll"></div>`],
 consult:["পরামর্শ",()=>`<h1>বিনামূল্যে পরামর্শ</h1><p class="mute">প্রথম পরামর্শ বিনামূল্যে। নির্দিষ্ট পরামর্শের জন্য আপনার কাগজপত্র দেখতে হতে পারে। পরামর্শের সময়: ${CFG.hours}।</p>
 <div class="box"><div class="row"><div><label for="n">আপনার নাম</label><input id="n"></div><div><label for="p">মোবাইল নম্বর</label><input id="p" type="tel"></div></div>
 <label for="t">বিষয়</label><select id="t"><option>ট্যাক্স নোটিশ</option><option>রিটার্ন জমা</option><option>TIN</option><option>উৎসে কর</option><option>অন্যান্য</option></select>
@@ -183,12 +189,15 @@ if(!/^\S+@\S+\.\S+$/.test(e)){o.textContent="সঠিক ইমেইল দি
 b.disabled=true;o.textContent="পাঠানো হচ্ছে…";
 try{await post({_subject:"New subscriber — "+CFG.name,_template:"table",email:e,type:"Subscribe"});o.textContent="ধন্যবাদ! আপনার ইমেইল যুক্ত হয়েছে। নতুন গাইড ও আপডেটের খবর পাবেন।";document.getElementById("se").value=""}
 catch(x){o.textContent="পাঠানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।"}b.disabled=false}
+function lib(){const q=(document.getElementById("lq")||{value:""}).value.toLowerCase(),o=document.getElementById("ll");if(!o)return;
+const r=LIB.filter(x=>(x[0]+x[1]).toLowerCase().includes(q));
+o.innerHTML=r.length?r.map(x=>`<a class="tile" style="margin:8px 0" href="${encodeURI(x[2])}" target="_blank" rel="noopener"><small class="mute">${x[1]}</small><h3>${x[0]}</h3>PDF খুলুন</a>`).join(""):`<p class="mute">কোনো ফাইল পাওয়া যায়নি।</p>`}
 function v(i){return document.getElementById(i).value.trim()}
 function days(){const el=document.getElementById("days");if(!el)return;const n=new Date(),y=n.getFullYear();let d=new Date(y,10,30);if(n>d)d=new Date(y+1,10,30);el.textContent=Math.ceil((d-n)/864e5)+" দিন বাকি ("+d.getDate()+" নভেম্বর "+d.getFullYear()+")"}
 function route(){const h=location.hash.slice(1)||"home",[k,arg]=h.split("/"),app=document.getElementById("app");
 if(k=="search")app.innerHTML=searchPage(arg);else app.innerHTML=(PAGES[k]||PAGES.home)[1]();
 document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")=="#"+k));
-document.title=((PAGES[k]||[""])[0]?PAGES[k][0]+" — ":"")+CFG.name;window.scrollTo(0,0);days()}
+document.title=((PAGES[k]||[""])[0]?PAGES[k][0]+" — ":"")+CFG.name;window.scrollTo(0,0);days();if(k=="library")lib()}
 document.getElementById("nav").innerHTML=Object.keys(PAGES).filter(k=>!["privacy","disclaimer","terms"].includes(k)).map(k=>`<a href="#${k}">${PAGES[k][0]}</a>`).join("");
 document.getElementById("foot").innerHTML=`<a href="tel:${CFG.phone}">${CFG.phone}</a> · <a href="tel:${CFG.phone2}">${CFG.phone2}</a> · <a href="mailto:${CFG.email}">${CFG.email}</a> · <a href="https://wa.me/${CFG.whatsapp}" target="_blank" rel="noopener">WhatsApp</a> · <a href="${CFG.facebook}" target="_blank" rel="noopener">Facebook</a>`;
 addEventListener("hashchange",route);route();
